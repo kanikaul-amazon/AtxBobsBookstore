@@ -56,6 +56,10 @@ namespace Bookstore.Data
 
             modelBuilder.Entity<Order>().HasOne(x => x.Customer).WithMany().OnDelete(DeleteBehavior.Restrict);
 
+            // Boolean to int conversions for PostgreSQL NUMERIC(1,0) compatibility
+            modelBuilder.Entity<Address>().Property(e => e.IsActive).HasConversion<int>();
+            modelBuilder.Entity<ShoppingCartItem>().Property(e => e.WantToBuy).HasConversion<int>();
+
             PopulateDatabase(modelBuilder);
 
             base.OnModelCreating(modelBuilder);
