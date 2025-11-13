@@ -42,6 +42,19 @@ namespace Bookstore.Data
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
+            // Apply schema qualification to all entities
+            modelBuilder.Entity<Address>().ToTable("address", schema: "bobsusedbookstore_dbo");
+            modelBuilder.Entity<Book>().ToTable("book", schema: "bobsusedbookstore_dbo");
+            modelBuilder.Entity<Customer>().ToTable("customer", schema: "bobsusedbookstore_dbo");
+            modelBuilder.Entity<Order>().ToTable("Order", schema: "bobsusedbookstore_dbo");
+            modelBuilder.Entity<ShoppingCart>().ToTable("shoppingcart", schema: "bobsusedbookstore_dbo");
+            modelBuilder.Entity<ShoppingCartItem>().ToTable("shoppingcartitem", schema: "bobsusedbookstore_dbo");
+            modelBuilder.Entity<OrderItem>().ToTable("orderitem", schema: "bobsusedbookstore_dbo");
+            modelBuilder.Entity<Offer>().ToTable("offer", schema: "bobsusedbookstore_dbo");
+            modelBuilder.Entity<Author>().ToTable("author", schema: "bobsusedbookstore_dbo");
+            modelBuilder.Entity<Product>().ToTable("product", schema: "bobsusedbookstore_dbo");
+            modelBuilder.Entity<ReferenceDataItem>().ToTable("referencedata", schema: "bobsusedbookstore_dbo");
+
             modelBuilder.Entity<Customer>().HasIndex(x => x.Sub).IsUnique();
 
             modelBuilder.Entity<Book>().HasOne(x => x.Publisher).WithMany().HasForeignKey(x => x.PublisherId).OnDelete(DeleteBehavior.Restrict);
