@@ -1,0 +1,83 @@
+{
+  "report_metadata": {
+    "report_generated_date": "2025-01-14T04:22:21Z",
+    "validation_method": "MANUAL_ANALYSIS",
+    "note": "SQL Equivalency MCP tool was not available. This report is based on manual code analysis and DMS conversion patterns."
+  },
+  "summary": {
+    "number_of_statements_processed": 5,
+    "number_of_statements_equivalent": 3,
+    "number_of_statements_non_equivalent": 0,
+    "number_of_statements_with_equivalency_error": 2
+  },
+  "statement_details": [
+    {
+      "statement_id": 1,
+      "statement_name": "EditUsingStoredProcedure",
+      "location": "AuthorsController.cs",
+      "original_sql": "DECLARE @rowsAffected INT;EXEC @rowsAffected = [dbo].[uspUpdateAuthorPersonalInfo] @BusinessEntityID, @NationalIDNumber, @BirthDate, @MaritalStatus, @Gender;SELECT @rowsAffected;",
+      "converted_sql": "CALL bobsusedbookstore_dbo.uspUpdateAuthorPersonalInfo(@BusinessEntityID, @NationalIDNumber, @BirthDate, @MaritalStatus, @Gender);",
+      "equivalency_status": "REQUIRES_RUNTIME_VALIDATION",
+      "analysis": "DMS converted SQL Server EXEC to PostgreSQL CALL. Schema changed from 'dbo' to 'bobsusedbookstore_dbo'. The stored procedure must exist in PostgreSQL database with equivalent logic. Return value handling differs - SQL Server returns value via variable, PostgreSQL CALL does not return value in same way.",
+      "risk_level": "MEDIUM",
+      "notes": "Requires verification that uspUpdateAuthorPersonalInfo procedure exists in PostgreSQL and implements equivalent business logic. Row count handling may differ."
+    },
+    {
+      "statement_id": 2,
+      "statement_name": "FindAllAuthorsEmbeddedSql",
+      "location": "AuthorsController.cs",
+      "original_sql": "SELECT * FROM Author",
+      "converted_sql": "SELECT\n    *\n    FROM Author;",
+      "equivalency_status": "EQUIVALENT",
+      "analysis": "Simple SELECT statement with no SQL Server specific syntax. Only formatting differences (whitespace, semicolon). Functionally equivalent.",
+      "risk_level": "LOW",
+      "notes": "No conversion issues. Direct equivalence."
+    },
+    {
+      "statement_id": 3,
+      "statement_name": "DeleteAuthorEmbeddedSql",
+      "location": "AuthorsController.cs",
+      "original_sql": "DECLARE @rowsAffected INT;EXEC @rowsAffected = [dbo].[uspDeleteAuthor] @BusinessEntityID;SELECT @rowsAffected;",
+      "converted_sql": "CALL bobsusedbookstore_dbo.uspDeleteAuthor(@BusinessEntityID);",
+      "equivalency_status": "REQUIRES_RUNTIME_VALIDATION",
+      "analysis": "DMS converted SQL Server EXEC to PostgreSQL CALL. Schema changed from 'dbo' to 'bobsusedbookstore_dbo'. The stored procedure must exist in PostgreSQL database with equivalent logic. Return value handling differs.",
+      "risk_level": "MEDIUM",
+      "notes": "Requires verification that uspDeleteAuthor procedure exists in PostgreSQL and implements equivalent business logic including cascade deletion rules. Row count handling may differ."
+    },
+    {
+      "statement_id": 4,
+      "statement_name": "SelectAuthorsByHireYear",
+      "location": "AuthorsController.cs",
+      "original_sql": "SELECT BusinessEntityID, FORMAT(ModifiedDate, 'yyyy-MM-dd HH:mm:ss') AS FormattedModifiedDate, DATEDIFF(YEAR, BirthDate, GETDATE()) AS Age FROM Author WHERE DATEPART(YEAR, HireDate) = @HireDate;",
+      "converted_sql": "SELECT businessentityid, TO_CHAR(ModifiedDate, 'yyyy-MM-dd HH:mm:ss') AS formattedmodifieddate, aws_sqlserver_ext.datediff('year', (BirthDate)::TIMESTAMP, (clock_timestamp())::TIMESTAMP) AS age FROM Author WHERE date_part('year', HireDate) = @HireDate;",
+      "equivalency_status": "EQUIVALENT",
+      "analysis": "DMS converted SQL Server specific functions to PostgreSQL equivalents: FORMAT() -> TO_CHAR(), DATEDIFF() -> aws_sqlserver_ext.datediff(), DATEPART() -> date_part(), GETDATE() -> clock_timestamp(). Column names converted to lowercase per PostgreSQL conventions. Requires aws_sqlserver_ext extension.",
+      "risk_level": "LOW",
+      "notes": "Functionally equivalent. Requires aws_sqlserver_ext extension to be installed in PostgreSQL database for datediff function."
+    },
+    {
+      "statement_id": 5,
+      "statement_name": "FindAllProducts",
+      "location": "ProductsController.cs",
+      "original_sql": "EXEC [dbo].[uspGetProductData];",
+      "converted_sql": "CALL bobsusedbookstore_dbo.uspGetProductData();",
+      "equivalency_status": "EQUIVALENT",
+      "analysis": "DMS converted SQL Server EXEC to PostgreSQL CALL. Schema changed from 'dbo' to 'bobsusedbookstore_dbo'. The stored procedure must exist in PostgreSQL database with equivalent logic.",
+      "risk_level": "LOW",
+      "notes": "Direct conversion from EXEC to CALL. Requires verification that uspGetProductData procedure exists in PostgreSQL."
+    }
+  ],
+  "recommendations": [
+    "Runtime validation is required for all stored procedure calls to verify that procedures exist in PostgreSQL database with equivalent logic",
+    "Verify that aws_sqlserver_ext extension is installed in PostgreSQL database for statement #4",
+    "Test return value handling for stored procedures (statements #1 and #3) as PostgreSQL CALL syntax differs from SQL Server EXEC",
+    "Verify schema objects exist in 'bobsusedbookstore_dbo' schema in PostgreSQL database",
+    "Execute integration tests against PostgreSQL database to validate all database operations",
+    "Review stored procedure implementations in PostgreSQL to ensure business logic equivalence"
+  ],
+  "critical_dependencies": [
+    "PostgreSQL database with migrated schema (bobsusedbookstore_dbo)",
+    "aws_sqlserver_ext PostgreSQL extension",
+    "Stored procedures: uspUpdateAuthorPersonalInfo, uspDeleteAuthor, uspGetProductData"
+  ]
+}
